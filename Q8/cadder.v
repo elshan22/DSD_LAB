@@ -4,29 +4,39 @@ module cadder #(parameter DATA_WIDTH = 8)
 					(input [DATA_WIDTH-1:0] A, B,
 					 input add_en,
 					 input enable, clk,
+					 output reg ready,
 					 output reg [DATA_WIDTH-1:0] result);
 	 
-	 reg counter;
+	 reg [1:0] counter;
 	 
 	 reg [DATA_WIDTH/2 - 1: 0] src1;
 	 reg [DATA_WIDTH/2 - 1: 0] src2;
 	 wire [DATA_WIDTH/2 - 1: 0] dst;
 	 
-	 adder adder(src1, src2, dst);
-	 
+	 adder #(DATA_WIDTH/2) adder (src1, src2, add_en, dst);
 
 	always @(posedge clk) begin
 		if (enable) begin
-			if (counter) begin
-				src1 = A[DATA_WIDTH/2 - 1:0];
-				src2 = add_en? B[DATA_WIDTH/2 - 1:0]: -B[DATA_WIDTH/2 - 1:0];
-				result[DATA_WIDTH/2 - 1:0] = dst;
-			end else begin
-				src1 = A[DATA_WIDTH-1: DATA_WIDTH/2];
-				src2 = add_en? B[DATA_WIDTH-1: DATA_WIDTH/2]: -B[DATA_WIDTH-1: DATA_WIDTH/2];
-				result[DATA_WIDTH-1: DATA_WIDTH/2] = dst;
-			end
-		end
+			case (counter)
+				2'd2: begin
+					result[DATA_WIDTH/2 - 1:0] = dst;
+					counter = 2'd0;
+					ready = 1'b1;
+				end
+				2'd1: begin
+					result[DATA_WIDTH-1: DATA_WIDTH/2] = dst;
+					src1 = A[DATA_WIDTH/2 - 1:0];
+					src2 = B[DATA_WIDTH/2 - 1:0];
+					counter = 2'd2;
+				end
+				2'd0: begin
+					src1 = A[DATA_WIDTH-1: DATA_WIDTH/2];
+					src2 = B[DATA_WIDTH-1: DATA_WIDTH/2];
+					ready = 1'b0;
+					counter = 2'd1;
+				end
+			endcase
+		end else counter = 2'd0;
 	end
 
 endmodule

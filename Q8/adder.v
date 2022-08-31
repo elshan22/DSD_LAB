@@ -2,10 +2,11 @@
 
 module adder #(parameter DATA_WIDTH = 8)
 				  (input [DATA_WIDTH-1:0] A, B,
+				   input add_en,
 				   output reg [DATA_WIDTH-1:0] result);
 
 	always @(A or B) begin
-		result = A + B;
+		result = (add_en)? (A+B): (A-B);
 	end
 
 endmodule
