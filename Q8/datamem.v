@@ -2,9 +2,10 @@
 
 module data_mem #(parameter DATA_WIDTH = 8, MEMORY_SIZE = 64)
 					  (input clk,
-						input [$clog2(MEMORY_SIZE)-1:0] addr,
+						input [$clog2(MEMORY_SIZE)-1:0] write_addr, read_addr,
 						input [DATA_WIDTH-1:0] write_data,
-						input write_en,
+						input write,
+						input read,
 						input reset,
 						output [DATA_WIDTH-1:0] read_data);
 						
@@ -15,7 +16,9 @@ module data_mem #(parameter DATA_WIDTH = 8, MEMORY_SIZE = 64)
 		if (!reset) begin
 			for (i = 0 ; i < MEMORY_SIZE; i=i+1)
 				mem[i] = 0;
-		end else if(write_en) mem[addr] = write_data;
-		else read_data = mem[addr];
+		end else begin
+			if (write) mem[write_addr] = write_data;
+			if (read) read_data = mem[read_addr];
+		end
 	 end
 endmodule
