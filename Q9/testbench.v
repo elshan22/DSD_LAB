@@ -62,9 +62,10 @@ module testbench;
 		read = 1;
 		A = 8'b10000101;
 		K = 8'b10000000;
-		#10
+		#20
 		$finish;
 	end
+	
       
 endmodule
 
