@@ -36,7 +36,10 @@ module cadder #(parameter DATA_WIDTH = 8)
 					counter = 2'd1;
 				end
 			endcase
-		end else counter = 2'd0;
+		end else begin
+			counter = 2'd0;
+			ready = 1'b0;
+		end
 	end
 
 endmodule

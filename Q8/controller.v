@@ -1,63 +1,39 @@
 `timescale 1ns / 1ps
-//////////////////////////////////////////////////////////////////////////////////
-// Company: 
-// Engineer: 
-// 
-// Create Date:    10:13:14 08/29/2022 
-// Design Name: 
-// Module Name:    controller 
-// Project Name: 
-// Target Devices: 
-// Tool versions: 
-// Description: 
-//
-// Dependencies: 
-//
-// Revision: 
-// Revision 0.01 - File Created
-// Additional Comments: 
-//
-//////////////////////////////////////////////////////////////////////////////////
-module controller(input[1:0] opcode, input reset, input[6:0] src1, src2, dst, output reg read, write, output reg [5:0] write_adr,
-read_adr1, read_adr2, output reg [2:0] aluop
-    );
-	 always @(*)
-	 begin
-	 if(reset == 1'b1) begin
-	 read = 1'b0;
-	 write = 1'b0;
-	 write_adr = 6'd0;
-	 read_adr1 = 6'd0;
-	 read_adr2 = 6'd0;
-	 aluop = 2'b00;
-	 end
-	 else begin
-	 case(opcode)
-	 2'b00: begin //add
-	 read = 1'b1;
-	 write = 1'b1;
-	 write_adr = dst;
-	 read_adr1 = src1;
-	 read_adr2 = src2;
-	 aluop = 2'b00;
-	 end
-	 2'b01: begin //sub
-	 read = 1'b1;
-	 write = 1'b1;
-	 write_adr = dst;
-	 read_adr1 = src1;
-	 read_adr2 = src2;
-	 aluop = 2'b01;
-	 end
-	 2'b10: begin //mul
-	 read = 1'b1;
-	 write = 1'b1;
-	 write_adr = dst;
-	 read_adr1 = src1;
-	 read_adr2 = src2;
-	 aluop = 2'b10;
-	 end
-	 endcase
-	 end
-	 end
+
+module controller #(parameter DATA_WIDTH = 8, INS_MEM_SIZE = 32, DATA_MEM_SIZE = 64)
+						 (input clk, reset, output executed);
+
+	reg [DATA_MEM_SIZE-1:0] changing;
+	reg finished;
+	integer i;
+	
+	assign executed = finished & (!(|changing));
+	
+	data_mem #(.DATA_WIDTH(DATA_WIDTH), .MEMORY_SIZE(DATA_MEM_SIZE)) data_memory
+	(.clk(clk), .write_addr(save_addr), .read_addr(load_addr), .write_data(data_write),
+	 .write(load_enable), .read(save_enable), .reset(reset), .read_data(data_read));
+	
+	fetch_cont #(.INS_MEMORY_SIZE(INS_MEM_SIZE), .DATA_MEMORY_SIZE(DATA_MEM_SIZE)) fetch_handle
+	(.enable(fetch_enable), .clk(clk), .opcode(op), .src1(src1_adr), .src2(src2_adr), .dst(dst_adr),
+	 .ready(fetch_ready), .finished(finished));
+	
+	load_handler #(.DATA_WIDTH(DATA_WIDTH), .DATA_MEMORY_SIZE(DATA_MEM_SIZE)) load_handle
+	(.opcode_in(op), .src1_addr(src1_adr), .src2_addr(src2_adr), .dst_addr(dst_adr),
+	 .data_in(data_read), .enable(load_enable), .clk(clk), .opcode_out(opc),
+	 .src1(source1), .src2(source2), .addr_out(load_addr), .dst_out(dst_out), .ready(load_ready));
+	
+	execont #(.WIDTH(DATA_WIDTH), .SIZE(DATA_MEM_SIZE)) execution_handle
+	(.dst_addr(dst_out), .src1(source1), .src2(source2), .opcode(opc), .enable(execution_enable),
+	 .clk(clk), .ready(execution_ready), .dst(res), .dst_out(dst_address));
+	
+	save_handler #(.DATA_WIDTH(DATA_WIDTH), .DATA_MEMORY_SIZE(DATA_MEM_SIZE)) save_handle
+	(.dst_addr(dst_address), .data_in(res), .enable(save_enable), .clk(clk), .addr_out(save_addr),
+	 .data_out(data_write), .ready(save_ready));
+	
+	always @(posedge clk) begin
+	
+		
+	
+	end
+
 endmodule

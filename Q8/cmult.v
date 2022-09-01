@@ -71,6 +71,9 @@ module cmult #(parameter WIDTH = 8)(
 					counter = 3'd1;
 				end
 			 endcase
-		 end else counter = 3'd0;
+		 end else begin
+			counter = 3'd0;
+			ready = 1'b0;
+		end
 	 end
 endmodule

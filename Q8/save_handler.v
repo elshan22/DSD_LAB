@@ -1,7 +1,6 @@
 `timescale 1ns / 1ps
 
-module save_handler #(parameter DATA_WIDTH = 8, DATA_MEMORY_SIZE = 64,
-										  INSTRUCTION_WIDTH = 3 * $clog2(DATA_MEMORY_SIZE) + 2)
+module save_handler #(parameter DATA_WIDTH = 8, DATA_MEMORY_SIZE = 64)
 							(input [$clog2(DATA_MEMORY_SIZE)-1:0] dst_addr,
 							 input [DATA_WIDTH-1:0] data_in,
 							 input enable, clk,
