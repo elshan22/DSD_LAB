@@ -6,7 +6,7 @@ module save_handler #(parameter DATA_WIDTH = 8, DATA_MEMORY_SIZE = 64)
 							 input enable, clk,
 							 output reg [$clog2(DATA_MEMORY_SIZE)-1:0] addr_out,
 							 output reg [DATA_WIDTH-1:0] data_out,
-							 output reg ready);
+							 output reg ready = 1'b0);
 		
 	reg counter;
 	
@@ -26,7 +26,6 @@ module save_handler #(parameter DATA_WIDTH = 8, DATA_MEMORY_SIZE = 64)
 				end
 			endcase
 		end else begin
-			ready = 1'b0;
 			counter = 1'b0;
 		end
 	

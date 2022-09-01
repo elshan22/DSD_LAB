@@ -3,6 +3,8 @@
 module controller #(parameter DATA_WIDTH = 8, INS_MEM_SIZE = 32, DATA_MEM_SIZE = 64)
 						 (input clk, reset, output executed);
 
+
+	reg [$clog2(INS_MEM_SIZE)-1:0] pc;
 	reg [DATA_MEM_SIZE-1:0] changing;
 	reg finished;
 	integer i;
@@ -14,7 +16,7 @@ module controller #(parameter DATA_WIDTH = 8, INS_MEM_SIZE = 32, DATA_MEM_SIZE =
 	 .write(load_enable), .read(save_enable), .reset(reset), .read_data(data_read));
 	
 	fetch_cont #(.INS_MEMORY_SIZE(INS_MEM_SIZE), .DATA_MEMORY_SIZE(DATA_MEM_SIZE)) fetch_handle
-	(.enable(fetch_enable), .clk(clk), .opcode(op), .src1(src1_adr), .src2(src2_adr), .dst(dst_adr),
+	(.pc(pc), .clk(clk), .opcode(op), .src1(src1_adr), .src2(src2_adr), .dst(dst_adr),
 	 .ready(fetch_ready), .finished(finished));
 	
 	load_handler #(.DATA_WIDTH(DATA_WIDTH), .DATA_MEMORY_SIZE(DATA_MEM_SIZE)) load_handle
@@ -30,10 +32,80 @@ module controller #(parameter DATA_WIDTH = 8, INS_MEM_SIZE = 32, DATA_MEM_SIZE =
 	(.dst_addr(dst_address), .data_in(res), .enable(save_enable), .clk(clk), .addr_out(save_addr),
 	 .data_out(data_write), .ready(save_ready));
 	
-	always @(posedge clk) begin
+	always @(negedge reset) begin
 	
-		
+			changing = {DATA_MEM_SIZE{1'b0}};
+			pc = 0;
+			load_enable = 1'b0;
+			execution_enable = 1'b0;
+			save_enable = 1'b0;
 	
 	end
+	
+	always @(posedge save_ready) begin
+		save_enable = 0;
+		changing[save_addr] = 0;
+	end
+	
+	always @(posedge execution_ready) begin
+		execution_enable = 0;
+		save_enable = 1'b1;
+	end
+	
+	always @(posedge load_ready) begin
+		load_enable = 0;
+		changing[dst_adr] = 1'b1;
+		if (execution_enable) begin
+			@(negedge execution_enable) execution_enable = 1'b1;
+		end else begin
+			execution_enable = 1'b1;
+		end
+	end
+	
+	always @(posedge fetch_ready) begin
+		if (load_enable) begin
+			@(negedge load_enable) begin
+				if (changing[src1_adr]) begin
+					@(negedge changing[src1_adr]) begin
+						if (changing[src2_adr]) begin
+							@(negedge changing[src2_adr]) begin
+								load_enable = 1'b1;
+								pc = pc + 1'b1;
+							end
+						end
+					end
+				end else if (changing[src2_adr]) begin
+					@(negedge changing[src2_adr]) begin
+						load_enable = 1'b1;
+						pc = pc + 1'b1;
+					end
+				end else begin
+					load_enable = 1'b1;
+					pc = pc + 1'b1;
+				end
+		end end else begin
+			begin
+				if (changing[src1_adr]) begin
+					@(negedge changing[src1_adr]) begin
+						if (changing[src2_adr]) begin
+							@(negedge changing[src2_adr]) begin
+								load_enable = 1'b1;
+								pc = pc + 1'b1;
+							end
+						end
+					end
+				end else if (changing[src2_adr]) begin
+					@(negedge changing[src2_adr]) begin
+						load_enable = 1'b1;
+						pc = pc + 1'b1;
+					end
+				end else begin
+					load_enable = 1'b1;
+					pc = pc + 1'b1;
+				end
+		end
+		end
+	end
+	
 
 endmodule
